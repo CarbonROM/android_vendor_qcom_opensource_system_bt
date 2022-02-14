@@ -225,7 +225,7 @@ extern tBTM_BOND_TYPE btm_get_bond_type_dev(const RawAddress& bd_addr);
 extern bool btm_set_bond_type_dev(const RawAddress& bd_addr,
                                   tBTM_BOND_TYPE bond_type);
 extern bool btm_is_sm4_dev(const RawAddress&  bd_addr);
-
+extern uint32_t BTM_GetRemoteCoD(const RawAddress& bd_addr);
 /* Internal functions provided by btm_sec.cc
  *********************************************
 */
@@ -301,5 +301,10 @@ extern void btm_acl_reset_paging(void);
 extern void btm_acl_paging(BT_HDR* p, const RawAddress& dest);
 extern uint8_t btm_sec_clr_service_by_psm(uint16_t psm);
 extern void btm_sec_clr_temp_auth_service(const RawAddress& bda);
+
+extern uint8_t btm_acl_get_qcm_phy_state(const RawAddress& bda);
+extern void btm_acl_update_qcm_phy_state(uint8_t* p);
+extern bool btm_acl_qhs_phy_supported(const RawAddress& bda,
+                                        tBT_TRANSPORT transport);
 
 #endif

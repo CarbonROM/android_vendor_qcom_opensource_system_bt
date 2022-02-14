@@ -339,6 +339,7 @@
 #define HCI_BLE_LTK_REQ_REPLY (0x001A | HCI_GRP_BLE_CMDS)
 #define HCI_BLE_LTK_REQ_NEG_REPLY (0x001B | HCI_GRP_BLE_CMDS)
 #define HCI_BLE_READ_SUPPORTED_STATES (0x001C | HCI_GRP_BLE_CMDS)
+#define HCI_BLE_WRITE_RF_PATH_COMPENSATION (0x004D | HCI_GRP_BLE_CMDS)
 /* 0x001D, 0x001E and 0x001F are reserved */
 #define HCI_BLE_RECEIVER_TEST (0x001D | HCI_GRP_BLE_CMDS)
 #define HCI_BLE_TRANSMITTER_TEST (0x001E | HCI_GRP_BLE_CMDS)
@@ -440,6 +441,10 @@
 /* Bluetooth Quality Report OCF */
 #define HCI_CONTROLLER_BQR_OPCODE_OCF (0x015E | HCI_GRP_VENDOR_SPECIFIC)
 
+/* Bluetoth Core Extension OCF */
+#define HCI_VS_QBCE_OCF (0x0051 | HCI_GRP_VENDOR_SPECIFIC)
+#define QBCE_SET_QLM_EVENT_MASK 0x0F
+
 /* subcode for multi adv feature */
 #define BTM_BLE_MULTI_ADV_SET_PARAM 0x01
 #define BTM_BLE_MULTI_ADV_WRITE_ADV_DATA 0x02
@@ -470,6 +475,9 @@
 
 /* Bluetooth Quality Report sub event */
 #define HCI_VSE_SUBCODE_BQR_SUB_EVT 0x58
+
+#define HCI_VSE_SUBCODE_QBCE 0x51
+#define MSG_QBCE_QCM_PHY_CHANGE  0x01
 
 /* LE supported states definition */
 #define HCI_LE_ADV_STATE 0x00000001
@@ -1466,6 +1474,8 @@ typedef struct {
 #define HCI_VOICE_TWS_PLUS_DUAL_ESCO_AG_SUPPORTED(x) ((x)[3] & 0x02)
 #define HCI_SWB_VOICE_WITH_APTX_ADAPTIVE_SUPPORTED(x) ((x)[3] & 0x04)
 
+#define HCI_QBCE_QCM_HCI_SUPPORTED(x) ((x)[3] & 0x20)
+
 #define HCI_BROADCAST_AUDIO_TX_WITH_EC_2_5(x) ((x)[4] & 0x01)
 #define HCI_BROADCAST_AUDIO_TX_WITH_EC_3_9(x) ((x)[4] & 0x02)
 #define HCI_BROADCAST_AUDIO_RX_WITH_EC_2_5(x) ((x)[4] & 0x04)
@@ -1713,6 +1723,8 @@ typedef struct {
 #define HCI_LE_ENH_RX_TEST_SUPPORTED(x) ((x)[35] & 0x80)
 
 #define HCI_LE_ENH_TX_TEST_SUPPORTED(x) ((x)[36] & 0x01)
+
+#define HCI_WRITE_RF_PATH_COMPENSATION_SUPPORTED(x) ((x)[39] & 0x02)
 
 #define HCI_LE_SET_PRIVACY_MODE_SUPPORTED(x) ((x)[39] & 0x04)
 

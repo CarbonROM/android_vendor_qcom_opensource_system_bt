@@ -924,6 +924,7 @@ void bta_dm_remove_device(tBTA_DM_MSG* p_data) {
   if (p_dev == NULL) return;
 
   RawAddress other_address = p_dev->bd_addr;
+  RawAddress peer_id_addr = p_dev->bd_addr;
 
   /* If ACL exists for the device in the remove_bond message*/
   bool continue_delete_dev = false;
@@ -975,6 +976,13 @@ void bta_dm_remove_device(tBTA_DM_MSG* p_data) {
     for (int i = 0; i < bta_dm_cb.device_list.count; i++) {
       auto& peer_device = bta_dm_cb.device_list.peer_device[i];
       if (peer_device.peer_bdaddr == other_address) {
+        /* If the same remote address having two different transport links, then
+         * need to disconnect the other link with same address. so need to fetch
+         * correct control block of that address */
+        if ((peer_device.transport != other_transport) &&
+            (peer_device.peer_bdaddr == peer_id_addr)) {
+          continue;
+        }
         peer_device.conn_state = BTA_DM_UNPAIRING;
 
         /* Make sure device is not in white list before we disconnect */
@@ -2397,7 +2405,7 @@ static void bta_dm_find_services(const RawAddress& bd_addr) {
 
       } else {
         if (uuid == Uuid::From16Bit(UUID_PROTOCOL_L2CAP)) {
-          if (sdpu_is_pbap_0102_enabled()) {
+          if (sdpu_is_pbap_0102_enabled() && !is_sdp_pbap_pce_disabled(bd_addr)) {
             LOG_DEBUG(LOG_TAG, "%s SDP search for PBAP Client ", __func__);
             BTA_SdpSearch(bd_addr, Uuid::From16Bit(UUID_SERVCLASS_PBAP_PCE));
           }

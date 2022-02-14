@@ -82,6 +82,9 @@
 #include "btif_bat.h"
 #include "bta/av/bta_av_int.h"
 #include "device/include/device_iot_config.h"
+#include "bt_types.h"
+#include "btm_int.h"
+
 #if (OFF_TARGET_TEST_ENABLED == FALSE)
 #include "audio_hal_interface/a2dp_encoding.h"
 #include "audio_a2dp_hw/include/audio_a2dp_hw.h"
@@ -736,6 +739,13 @@ static void btif_report_source_codec_state(UNUSED_ATTR void* p_data,
         } else {
           btif_av_cb[index].codec_latency = APTX_HQ_LATENCY;
         }
+      }
+      if (btm_acl_qhs_phy_supported(*bd_addr, BT_TRANSPORT_BR_EDR)) {
+        codec_config.codec_specific_3 &= ~((int64_t)QHS_SUPPORT_MASK);
+        codec_config.codec_specific_3 |=  (int64_t)QHS_SUPPORT_AVAILABLE;
+      } else {
+        codec_config.codec_specific_3 &= ~((int64_t)QHS_SUPPORT_MASK);
+        codec_config.codec_specific_3 |=  (int64_t)QHS_SUPPORT_NOT_AVAILABLE;
       }
     } else {
       btif_av_cb[index].codec_latency = 0;
@@ -4125,6 +4135,20 @@ void btif_av_event_deep_copy(uint16_t event, char* p_dest, char* p_src) {
          maybe_non_aligned_memcpy(av_dest_av_rc_collision_detect,
                                   av_src_av_rc_collision_detect,
                                   sizeof(*av_src_av_rc_collision_detect));
+         break;
+      }
+
+      case BTA_AV_COLL_DETECTED_EVT: //29
+      {
+         tBTA_AV_COLL_DETECTED* av_src_av_collision_detect =
+                                                 (tBTA_AV_COLL_DETECTED*)p_src;
+         tBTA_AV_COLL_DETECTED* av_dest_av_collision_detect =
+                                                 (tBTA_AV_COLL_DETECTED*)p_dest;
+         BTIF_TRACE_DEBUG("%s: event: %d, size: %d", __func__, event,
+                                      sizeof(*av_src_av_collision_detect));
+         maybe_non_aligned_memcpy(av_dest_av_collision_detect,
+                                  av_src_av_collision_detect,
+                                  sizeof(*av_src_av_collision_detect));
          break;
       }
 

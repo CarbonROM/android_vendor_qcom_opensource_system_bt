@@ -37,6 +37,8 @@
 #include <dlfcn.h>
 #include <vector>
 #include "stack_config.h"
+#include "device/include/interop_config.h"
+#include "device/include/profile_config.h"
 
 #define BTSNOOP_ENABLE_PROPERTY "persist.bluetooth.btsnoopenable"
 #define BTSNOOP_SOCLOG_PROPERTY "persist.vendor.service.bdroid.soclog"
@@ -57,6 +59,9 @@ const uint8_t SCO_HOST_BUFFER_SIZE = 0xff;
 #define MAX_SUPPORTED_SCRAMBLING_FREQ_SIZE 8
 #define MAX_SCRAMBLING_FREQS_SIZE 64
 #define UNUSED(x) (void)(x)
+
+const bt_event_mask_t QBCE_QLM_EVENT_MASK = {
+  {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02}};
 
 static const hci_t* hci;
 static const hci_packet_factory_t* packet_factory;
@@ -99,6 +104,7 @@ static bool ble_offload_features_supported;
 static bool simple_pairing_supported;
 static bool secure_connections_supported;
 static bool read_simple_pairing_options_supported;
+static bool hci_write_rf_path_compensation_supported;
 
 //BT features related defines
 static bt_soc_type_t soc_type = BT_SOC_TYPE_DEFAULT;
@@ -506,6 +512,20 @@ static future_t* start_up(void) {
         simple_pairing_options);
   }
 
+  // write rf tx & rx path compensation value
+  hci_write_rf_path_compensation_supported =
+             HCI_WRITE_RF_PATH_COMPENSATION_SUPPORTED(supported_commands);
+
+  if(hci_write_rf_path_compensation_supported) {
+    uint16_t tx_path_value = rf_path_loss_values_fetch(RF_PATH_LOSS_ID, RF_TX_PATH_COMPENSATION_VALUE);
+    uint16_t rx_path_value = rf_path_loss_values_fetch(RF_PATH_LOSS_ID, RF_RX_PATH_COMPENSATION_VALUE);
+    response =
+        AWAIT_COMMAND(packet_factory->make_ble_write_rf_path_compensation(tx_path_value, rx_path_value));
+    packet_parser->parse_generic_command_complete(response);
+    LOG_DEBUG(LOG_TAG, "%s HCI write RF compensation tx value : %d, rx value : %d", __func__,
+        tx_path_value, rx_path_value);
+  }
+
   if (bt_configstore_intf != NULL) {
     host_add_on_features_list_t features_list;
 
@@ -583,6 +603,12 @@ static future_t* start_up(void) {
     }
   }
 
+
+  if (HCI_QBCE_QCM_HCI_SUPPORTED(soc_add_on_features.as_array)) {
+    response = AWAIT_COMMAND(packet_factory->make_qbce_set_qlm_event_mask(
+                            &QBCE_QLM_EVENT_MASK));
+    packet_parser->parse_generic_command_complete(response);
+  }
 
   if (!HCI_READ_ENCR_KEY_SIZE_SUPPORTED(supported_commands)) {
     LOG(FATAL) << " Controller must support Read Encryption Key Size command";
@@ -930,6 +956,11 @@ static bool get_max_power_values(uint8_t *power_val) {
   return max_power_prop_enabled;
 }
 
+static bool is_qbce_QCM_HCI_supported(void) {
+  return HCI_QBCE_QCM_HCI_SUPPORTED(
+               soc_add_on_features.as_array);
+}
+
 static const controller_t interface = {
     get_is_ready,
 
@@ -997,6 +1028,7 @@ static const controller_t interface = {
     is_multicast_enabled,
     supports_twsp_remote_state,
     get_max_power_values,
+    is_qbce_QCM_HCI_supported,
 };
 
 const controller_t* controller_get_interface() {
